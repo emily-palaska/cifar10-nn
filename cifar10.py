@@ -44,11 +44,21 @@ class Cifar10(Dataset):
         self.images = np.concatenate(self.images)
         self.labels = np.concatenate(self.labels)
 
-        # Calculate mean and std fr normalization
+        # Calculate mean and std for normalization
         # self.test_mean = np.mean(self.test_images)
         # self.test_std = np.std(self.test_images)
         self.mean = np.mean(self.images)
         self.std = np.std(self.images)
+
+        # Reshpae to HWC
+        # Separate each color channel and reshape
+        red_channel = self.images[:,:1024].reshape((self.images.shape[0], 32, 32))
+        green_channel = self.images[:,1024:2048].reshape((self.images.shape[0], 32, 32))
+        blue_channel = self.images[:,2048:].reshape((self.images.shape[0], 32, 32))
+
+        # Stack the channels along the third dimension to create an RGB image
+        self.images = np.stack((red_channel, green_channel, blue_channel), axis=-1).astype(np.uint8)
+
         end_time = time.time()
 
         print('-------------------------')
@@ -140,13 +150,6 @@ class Cifar10(Dataset):
         elif self.normalization == 'min-max':
             image = image * (self.max - self.min) + self.min
 
-        # Separate each color channel and reshape
-        red_channel = image[:1024].reshape((32, 32))
-        green_channel = image[1024:2048].reshape((32, 32))
-        blue_channel = image[2048:].reshape((32, 32))
-
-        # Stack the channels along the third dimension to create an RGB image
-        image = np.stack((red_channel, green_channel, blue_channel), axis=-1).astype(np.uint8)
         return image
 
 

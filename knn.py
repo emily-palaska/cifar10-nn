@@ -33,14 +33,14 @@ class KNNClassifier:
             self.features = self.features.reshape(self.features.shape[0], -1)  # Flatten images
             distances = np.mean((self.features - new_feature) ** 2, axis=1)
         elif method == 'structural_similarity':
-            self.features = self.features.reshape(self.features.shape[0], 256, 256,
-                                                  3)  # Reshape to original image shape
-            new_feature = new_feature.reshape(256, 256, 3)  # Reshape to original image shape
+            self.features = self.features.reshape(self.features.shape[0], 32, 32, 3)  # Reshape to original image shape
+            new_feature = new_feature.reshape(32, 32, 3)  # Reshape to original image shape
             distances = []
             for feature in self.features:
-                score, _ = ssim(new_feature, feature, full=True, multichannel=True)
+                data_range = np.max(new_feature) - np.min(new_feature)
+                score = ssim(new_feature, feature, channel_axis=2, data_range=data_range)
                 distances.append(1 - score)  # Invert SSIM for distance metric
-                distances = np.array(distances)
+            distances = np.array(distances)
         elif method == 'cosine_similarity':
             self.features = self.features.reshape(self.features.shape[0], -1)  # Flatten images
             distances = 1 - pairwise_distances(new_feature, self.features, metric='cosine').flatten()
