@@ -1,5 +1,3 @@
-from transformers.models.prophetnet.modeling_prophetnet import softmax
-
 from FullyConnectedLayer import FullyConnectedLayer
 from utils import *
 
