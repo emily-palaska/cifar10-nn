@@ -9,12 +9,12 @@ class ReLU:
         return d_output * (self.last_input > 0)
 
 class Softmax:
-    def forward(self, input):
-        exp_values = np.exp(input - np.max(input, axis=1, keepdims=True))
+    def forward(self, x):
+        exp_values = np.exp(x - np.max(x, axis=1, keepdims=True))
         probabilities = exp_values / np.sum(exp_values, axis=1, keepdims=True)
         return probabilities
 
-def cross_entropy_loss(self, predictions, labels):
+def cross_entropy_loss(predictions, labels):
     return -np.mean(np.sum(labels * np.log(predictions + 1e-9), axis=1))
 
 def to_one_hot(labels, num_classes):
