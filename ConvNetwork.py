@@ -1,5 +1,6 @@
 import numpy as np
-import math
+import math, json, time
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
 
 from cnn.ConvLayer import ConvLayer
 from cnn.FullyConnectedLayer import FullyConnectedLayer
@@ -9,7 +10,7 @@ from baselines.cifar10 import Cifar10, unpickle
 class ConvNetwork:
     def __init__(self, input_size, num_classes, layer_config):
         self.layers = []
-        self.layer_config = layer_config # (num_filters, kernel_size, stride, padding)
+        self.layer_config = layer_config  # (num_filters, kernel_size, stride, padding)
         self.softmax = Softmax()
         self.batch_size, self.height, self.width, self.input_chan = input_size
         self.num_classes = num_classes
@@ -26,22 +27,21 @@ class ConvNetwork:
         layer = FullyConnectedLayer(flattened_size, num_classes)
         self.layers.append(layer)
 
-    def train(self, x_train, y_train, epochs=1000, learning_rate=0.01):
-        # x is num_samples, height, width, channels
-
-        # Split into unique batches
+    def train(self, x_train, y_train, x_test, y_test, epochs=1000, learning_rate=0.01):
         num_batches = len(x_train) // self.batch_size
         x_batches = np.array_split(x_train[:num_batches * self.batch_size], num_batches)
         y_batches = np.array_split(y_train[:num_batches * self.batch_size], num_batches)
 
+        results = {"epochs": []}
 
         for epoch in range(epochs):
-            x_batch = x_batches[epoch]
-            y_batch = y_batches[epoch]
+            start_time = time.time()
+            x_batch = x_batches[epoch % num_batches]
+            y_batch = y_batches[epoch % num_batches]
 
             activations = [x_batch]
 
-            # forward pass layers
+            # Forward pass
             for layer in self.layers:
                 if layer.type == 'fc':
                     current_activations = activations[-1].reshape(activations[-1].shape[0], -1)
@@ -50,21 +50,66 @@ class ConvNetwork:
                 z = layer.forward(current_activations)
                 activations.append(z)
 
-            # apply softmax
+            # Apply softmax
             activations.append(self.softmax.forward(activations[-1]))
 
-            # calculate loss
+            # Calculate loss
             loss = cross_entropy_loss(activations[-1], y_batch)
-            if epoch % 1 == 0:
-                print(f"Epoch {epoch} loss: {loss}")
+            results["epochs"].append({"epoch": epoch, "loss": loss})
 
-            # back propagation
-            da = activations[-1] - y_batch  # Gradient for output layer
+            # Backward pass
+            da = activations[-1] - y_batch
             for layer in reversed(self.layers):
                 da = layer.backward(da, learning_rate=learning_rate)
 
+            end_time = time.time()
+            results["epochs"][-1]["time"] = end_time - start_time
+            print(f"Epoch {epoch}, Loss: {loss:.4f}, Time: {end_time - start_time:.4f} seconds")
+
+        # Evaluate on test data
+        metrics = self.evaluate(x_test, y_test)
+        results["test_metrics"] = metrics
+
+        # Save results to JSON file
+        with open("training_results.json", "w") as f:
+            json.dump(results, f, indent=4)
+
+    def evaluate(self, x, y):
+        activations = [x]
+        for layer in self.layers:
+            if layer.type == 'fc':
+                current_activations = activations[-1].reshape(activations[-1].shape[0], -1)
+            else:
+                current_activations = activations[-1]
+            z = layer.forward(current_activations)
+            activations.append(z)
+
+        predictions = np.argmax(self.softmax.forward(activations[-1]), axis=1)
+        true_labels = np.argmax(y, axis=1)
+
+        acc = accuracy_score(true_labels, predictions)
+        precision, recall, fscore, _ = precision_recall_fscore_support(true_labels, predictions, average="weighted")
+        conf_matrix = confusion_matrix(true_labels, predictions)
+
+        print("Evaluation Results:")
+        print(f"Accuracy: {acc:.4f}")
+        print(f"Precision: {precision:.4f}")
+        print(f"Recall: {recall:.4f}")
+        print(f"F1-Score: {fscore:.4f}")
+        print("Confusion Matrix:")
+        print(conf_matrix)
+
+        return {
+            "accuracy": acc,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": fscore,
+            "confusion_matrix": conf_matrix.tolist()
+        }
+
+
 def main():
-    input_size = (100, 32, 32, 3)
+    input_size = (10, 32, 32, 3)
     num_classes = 10
     layer_config = [(8, 3, 1, 1), (8, 3, 1, 1)]
     nn = ConvNetwork(input_size, num_classes, layer_config)
@@ -72,21 +117,15 @@ def main():
     # Load the CIFAR-10 dataset
     dataset = Cifar10(normalization='min-max')
 
-    # Prepare the dataset
     x_train = dataset.images
     y_train = dataset.labels
     y_train = to_one_hot(y_train, 10)
-
-    """
-    # Load the test batch and normalize it with min-max
-    test_batch = unpickle('./data/cifar-10-batches-py/test_batch')
-    X_test = np.array(test_batch[b'data'])
-    X_test = (X_test - np.min(X_test)) / (np.max(X_test) - np.min(X_test))
-    y_test = np.array(test_batch[b'labels'])
+    x_test = dataset.images_test
+    y_test = dataset.labels_test
     y_test = to_one_hot(y_test, 10)
-    """
 
-    nn.train(x_train, y_train)
+
+    nn.train(x_train, y_train, x_test, y_test, epochs=3)
 
 if __name__ == '__main__':
     main()
