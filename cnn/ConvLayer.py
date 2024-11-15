@@ -1,25 +1,45 @@
 import numpy as np
 import math
-from utils import ReLU
+from cnn.utils import ReLU
+
 class ConvLayer:
-    def __init__(self, num_filters, kernel_size, input_channels, stride=1, padding=0):
+    def __init__(self, num_filters, kernel_size, input_size, stride=1, padding=0, init_type='xavier'):
         """
         Initialize a convolutional layer.
 
         :param num_filters: number of filters
         :param kernel_size: kernel size (assumed square)
-        :param input_channels: channels of input
+        :param input_size: (batch_size, height, width, channels)
         :param stride: stride of convolution
         :param padding: padding of convolution
         """
+        self.type = 'conv'
         self.num_filters = num_filters
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
-        self.input_channels = input_channels
+
+        # calculate input and output size
+        self.batch_size, self.in_height, self.in_width, self.in_channels = input_size
+        self.out_height = math.floor((self.in_height - kernel_size + 2 * padding) / stride + 1)
+        self.out_width = math.floor((self.in_width - kernel_size + 2 * padding) / stride + 1)
+
+        # initialize relu instance
         self.relu = ReLU()
-        self.weights = self.initialize_weights((num_filters, kernel_size, kernel_size, input_channels))
+
+        # initialize weights and biases with specified method
+        self.weights = self.initialize_weights((num_filters, kernel_size, kernel_size, self.in_channels), init_type)
         self.biases = np.zeros((num_filters, 1))
+
+        # placeholder for cached input and activations
+        self.activations = None
+        self.input = None
+
+    def get_in_size(self):
+        return self.batch_size, self.in_height, self.in_width, self.in_channels
+
+    def get_out_size(self):
+        return self.batch_size, self.out_height, self.out_width, self.num_filters
 
     @staticmethod
     def initialize_weights(size, init_type="xavier"):
@@ -33,14 +53,15 @@ class ConvLayer:
             return np.random.randn(size) * 0.01
 
     def forward(self, x):
-        activations = self.convolve(x)
-        activations = self.relu.forward(activations)
-        return activations
+        self.activations = self.convolve(x)
+        self.activations = self.relu.forward(self.activations)
+        self.input = x
+        return self.activations
 
     def convolve(self, x):
         # Extract dimensions
         batch_size, in_height, in_width, in_channels = x.shape
-        if not in_channels == self.input_channels:
+        if not in_channels == self.in_channels:
             print("Dimension error in convolution")
             exit(1)
 
@@ -69,63 +90,56 @@ class ConvLayer:
 
         return output
 
-    def backward(self, d_out, x):
-        """
-        Compute the backward pass for a convolutional layer.
+    def backward(self, da, learning_rate=0.01):
+        # Get the last input
+        a = self.input
 
-        Parameters:
-        - d_out: Gradient of the loss with respect to the output of this layer, shape (batch_size, out_height, out_width, num_filters)
-        - x: Input to the forward pass of this layer, shape (batch_size, in_height, in_width, input_channels)
+        # Apply ReLU derivative
+        da = da.reshape(*self.get_out_size())
+        dz = da * self.relu.backward(self.activations)
 
-        Returns:
-        - d_x: Gradient of the loss with respect to the input of this layer, shape (batch_size, in_height, in_width, input_channels)
-        """
-        # Initialize gradients for weights and biases
-        d_weights = np.zeros_like(self.weights)
-        d_biases = np.zeros_like(self.biases)
-
-        # Calculate the dimensions for d_x
-        batch_size, in_height, in_width, in_channels = x.shape
-        _, out_height, out_width, num_filters = d_out.shape
-
-        # Initialize the gradient for the input with padding for the backward convolution
-        d_x = np.zeros((batch_size, in_height + 2 * self.padding, in_width + 2 * self.padding, in_channels))
+        # Initialize new gradients for activations, weights and biases
+        dw = np.zeros_like(self.weights)
+        db = np.zeros_like(self.biases)
+        da = np.zeros((self.batch_size, self.in_height, self.in_width, self.in_channels))
 
         # Pad the input
-        x_padded = np.pad(x, ((0, 0), (self.padding, self.padding), (self.padding, self.padding), (0, 0)),
+        a_pad = np.pad(a, ((0, 0), (self.padding, self.padding), (self.padding, self.padding), (0, 0)),
                           mode='constant')
-        d_x_padded = np.zeros_like(x_padded)
+        da_pad = np.pad(da, ((0, 0), (self.padding, self.padding), (self.padding, self.padding), (0, 0)),
+                          mode='constant')
 
         # Loop over the batch size, height, width, and filters to compute gradients
-        for n in range(batch_size):
-            for i in range(out_height):
-                for j in range(out_width):
+        for n in range(self.batch_size):
+            for i in range(self.out_height):
+                for j in range(self.out_width):
                     h_start = i * self.stride
                     h_end = h_start + self.kernel_size
                     w_start = j * self.stride
                     w_end = w_start + self.kernel_size
 
-                    for k in range(num_filters):
+                    for k in range(self.num_filters):
                         # Slice the region from x_padded that contributed to the output
-                        x_slice = x_padded[n, h_start:h_end, w_start:w_end, :]
-
-                        # Accumulate the gradient for the filter weights
-                        d_weights[k] += x_slice * d_out[n, i, j, k]
-
-                        # Accumulate the gradient for the biases
-                        d_biases[k] += d_out[n, i, j, k]
+                        a_slice = a_pad[n, h_start:h_end, w_start:w_end, :]
 
                         # Accumulate the gradient for the input
-                        d_x_padded[n, h_start:h_end, w_start:w_end, :] += self.weights[k] * d_out[n, i, j, k]
+                        da_pad[n, h_start:h_end, w_start:w_end, :] += self.weights[k] * dz[n, i, j, k]
+
+                        # Accumulate the gradient for the filter weights and biases
+                        dw[k] += a_slice * dz[n, i, j, k]
+                        db += dz[n, i, j, k]
 
         # Remove padding from d_x_padded to get the gradient with respect to the original input
         if self.padding > 0:
-            d_x = d_x_padded[:, self.padding:-self.padding, self.padding:-self.padding, :]
+            da = da_pad[:, self.padding:-self.padding, self.padding:-self.padding, :]
         else:
-            d_x = d_x_padded
+            da = da_pad
 
-        # update parameters here
-        return d_x, d_weights, d_biases
+        # Update parameters
+        self.weights -= learning_rate * dw
+        self.biases -= learning_rate * db
+
+        return da
 
 
 # Define the main function

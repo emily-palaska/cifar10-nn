@@ -1,5 +1,5 @@
 import numpy as np
-from utils import ReLU
+from cnn.utils import ReLU
 
 
 class FullyConnectedLayer:
@@ -10,7 +10,7 @@ class FullyConnectedLayer:
         :param output_size: (int) The number of output neurons.
         :param init_type: The type of weight initialization ("xavier" or "he").
         """
-
+        self.type = 'fc'
         self.input_size = input_size
         self.output_size = output_size
 
@@ -23,6 +23,9 @@ class FullyConnectedLayer:
 
         self.input = None  # Placeholder for the input during forward pass
         self.activations = None  # Placeholder for the activations
+
+    def get_in_size(self):
+        return self.input_size
 
     @staticmethod
     def initialize_weights(size, init_type="xavier"):
@@ -58,15 +61,14 @@ class FullyConnectedLayer:
         self.activations = self.relu.forward(self.activations)  # Apply the ReLU activation function
         return self.activations  # Return the activations after ReLU
 
-    def backward(self, da, num_samples, learning_rate=0.1):
+    def backward(self, da, learning_rate=0.01):
         """
         Backward pass through the fully connected layer to update weights and biases.
         :param da: (np.ndarray) The gradient of the loss with respect to the output activations.
-        :param num_samples: (int) The number of samples in the current batch.
         :param learning_rate: (float) The learning rate for gradient descent.
         :return: np.ndarray: The gradient of the loss with respect to the input, for the previous layer.
         """
-
+        num_samples = self.input.shape[0]
         dz = da * self.relu.backward(self.activations)  # Compute the gradient of the loss w.r.t the activations
         dw = np.dot(self.input.T, dz) / num_samples  # Compute the gradient w.r.t the weights
         db = np.sum(dz, axis=0, keepdims=True) / num_samples  # Compute the gradient w.r.t the biases
