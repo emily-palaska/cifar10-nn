@@ -27,12 +27,15 @@ class ConvNetwork:
         layer = FullyConnectedLayer(flattened_size, num_classes)
         self.layers.append(layer)
 
-    def train(self, x_train, y_train, x_test, y_test, epochs=1000, learning_rate=0.01):
+    def train(self, x_train, y_train, x_test, y_test, epochs=10, learning_rate=0.01):
         num_batches = len(x_train) // self.batch_size
         x_batches = np.array_split(x_train[:num_batches * self.batch_size], num_batches)
         y_batches = np.array_split(y_train[:num_batches * self.batch_size], num_batches)
 
         results = {"epochs": []}
+
+        with open('output_cnn.txt', 'w') as tf:
+            tf.write('Convolution Training Started\n')
 
         for epoch in range(epochs):
             start_time = time.time()
@@ -64,7 +67,10 @@ class ConvNetwork:
 
             end_time = time.time()
             results["epochs"][-1]["time"] = end_time - start_time
-            print(f"Epoch {epoch}, Loss: {loss:.4f}, Time: {end_time - start_time:.4f} seconds")
+
+            with open('output_cnn.txt', 'w') as tf:
+                tf.write(f"Epoch {epoch}, Loss: {loss:.4f}, Time: {end_time - start_time:.4f} seconds\n")
+            #print(f"Epoch {epoch}, Loss: {loss:.4f}, Time: {end_time - start_time:.4f} seconds")
 
         # Evaluate on test data
         metrics = self.evaluate(x_test, y_test)
@@ -109,9 +115,9 @@ class ConvNetwork:
 
 
 def main():
-    input_size = (10, 32, 32, 3)
+    input_size = (10000, 32, 32, 3)
     num_classes = 10
-    layer_config = [(8, 3, 1, 1), (8, 3, 1, 1)]
+    layer_config = [(32, 3, 1, 1), (32, 3, 1, 1), (64, 3, 1, 1), (64, 3, 1, 1)]
     nn = ConvNetwork(input_size, num_classes, layer_config)
 
     # Load the CIFAR-10 dataset
