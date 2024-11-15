@@ -29,11 +29,11 @@ class Cifar10(Dataset):
             self.images.append(batch[b'data'])
             self.labels.append(batch[b'labels'])
 
-        # # Load the test batch
-        # load_path = os.path.join(self.data_folder, 'test_batch')
-        # test_batch = unpickle(load_path)
-        # self.test_images = test_batch[b'data']
-        # self.test_labels = test_batch[b'labels']
+        # Load the test batch and normalize it with min-max
+        test_batch = unpickle('./data/cifar-10-batches-py/test_batch')
+        self.images_test = np.array(test_batch[b'data'])
+
+        self.labels_test = np.array(test_batch[b'labels'])
 
         # Load labels decoder to strings
         load_path = os.path.join(self.data_folder, 'batches.meta')
@@ -45,20 +45,21 @@ class Cifar10(Dataset):
         self.labels = np.concatenate(self.labels)
 
         # Calculate mean and std for normalization
-        # self.test_mean = np.mean(self.test_images)
-        # self.test_std = np.std(self.test_images)
+        self.test_mean = np.mean(self.images_test)
+        self.test_std = np.std(self.images_test)
         self.mean = np.mean(self.images)
         self.std = np.std(self.images)
 
-
-        # Reshape to HWC
-        # Separate each color channel and reshape
+        # Reshape training and test iamges to HWC
         red_channel = self.images[:,:1024].reshape((self.images.shape[0], 32, 32))
         green_channel = self.images[:,1024:2048].reshape((self.images.shape[0], 32, 32))
         blue_channel = self.images[:,2048:].reshape((self.images.shape[0], 32, 32))
-
-        # Stack the channels along the third dimension to create an RGB image
         self.images = np.stack((red_channel, green_channel, blue_channel), axis=-1).astype(np.uint8)
+
+        red_channel = self.images_test[:, :1024].reshape((self.images_test.shape[0], 32, 32))
+        green_channel = self.images_test[:, 1024:2048].reshape((self.images_test.shape[0], 32, 32))
+        blue_channel = self.images_test[:, 2048:].reshape((self.images_test.shape[0], 32, 32))
+        self.images_test = np.stack((red_channel, green_channel, blue_channel), axis=-1).astype(np.uint8)
 
         end_time = time.time()
 
@@ -73,7 +74,12 @@ class Cifar10(Dataset):
         # Normalize according to normalization argument
         if self.normalization == 'z-score':
             self.images = (self.images - self.mean) / self.std
+            self.images_test = (self.images_test - self.test_mean) / self.test_std
         elif self.normalization == 'min-max':
+            self.min = np.min(self.images_test)
+            self.max = np.max(self.images_test)
+            self.images_test = (self.images_test - self.min) / (self.max - self.min)
+
             self.min = np.min(self.images)
             self.max = np.max(self.images)
             self.images = (self.images - self.min) / (self.max - self.min)
