@@ -14,7 +14,7 @@ def unpickle(file):
     return data
 
 class Cifar10(Dataset):
-    def __init__(self, data_folder='./data/cifar-10-batches-py', normalization='z-score', verbose=False):
+    def __init__(self, data_folder='./data/cifar-10-batches-py', normalization='z-score', verbose=True):
         self.data_folder = data_folder
         self.verbose = verbose
         self.normalization = normalization
@@ -50,7 +50,7 @@ class Cifar10(Dataset):
         self.mean = np.mean(self.images)
         self.std = np.std(self.images)
 
-        # Reshape training and test iamges to HWC
+        # Reshape training and test images to HWC
         red_channel = self.images[:,:1024].reshape((self.images.shape[0], 32, 32))
         green_channel = self.images[:,1024:2048].reshape((self.images.shape[0], 32, 32))
         blue_channel = self.images[:,2048:].reshape((self.images.shape[0], 32, 32))
@@ -63,13 +63,14 @@ class Cifar10(Dataset):
 
         end_time = time.time()
 
-        print('-------------------------')
-        print(f'CIFAR-10 loaded successfully in {end_time - start_time: .2f}s')
-        print(f'Size: images-> {self.images.shape} \t labels -> {self.labels.shape}')
-        print(f'Unique Labels: {np.unique(self.labels)}')
-        print(f'Label Names: {self.label_names}')
-        print(f'Mean: {self.mean} Std: {self.std}')
-        print("-------------------------\n")
+        if verbose:
+            print('-------------------------')
+            print(f'CIFAR-10 loaded successfully in {end_time - start_time: .2f}s')
+            print(f'Size: images-> {self.images.shape} \t labels -> {self.labels.shape}')
+            print(f'Unique Labels: {np.unique(self.labels)}')
+            print(f'Label Names: {self.label_names}')
+            print(f'Mean: {self.mean} Std: {self.std}')
+            print("-------------------------\n")
 
         # Normalize according to normalization argument
         if self.normalization == 'z-score':
