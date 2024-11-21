@@ -1,6 +1,6 @@
 import numpy as np
 
-from baselines.cifar10 import Cifar10, unpickle
+from cifar10 import Cifar10, unpickle
 from knn import KNNClassifier
 from nearest_centroid import NearestCentroidClassifier
 from evaluate import evaluate
