@@ -79,7 +79,7 @@ class Trainer:
             self.history["train_loss"].append(train_loss)
             self.history["val_loss"].append(val_loss)
             self.history["time"].append(end_time - start_time)
-            print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}")
+            print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss:.4f}, Validation Loss: {val_loss:.4f}, Time: {end_time - start_time: .4f}")
 
     def validate(self):
         self.model.eval()
