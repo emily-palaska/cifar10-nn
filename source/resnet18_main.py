@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from baselines.cifar10 import Cifar10
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim.lr_scheduler import StepLR
 
 if __name__ == "__main__":
     # Load the CIFAR-10 dataset
@@ -30,14 +31,15 @@ if __name__ == "__main__":
     val_loader = DataLoader(TensorDataset(x_val, y_val), batch_size=64)
     test_loader = DataLoader(TensorDataset(x_test, y_test), batch_size=64)
 
-    # Define model, loss, optimizer
+    # Define model, loss, optimizer and scheduler
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ResNet18(num_classes=10)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
+    scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
 
     # Train and evaluate
-    trainer = Trainer(model, train_loader, val_loader, test_loader, criterion, optimizer, device)
+    trainer = Trainer(model, train_loader, val_loader, test_loader, criterion, optimizer, device, scheduler)
     trainer.train(epochs=20)
 
     # Evaluate on test set
