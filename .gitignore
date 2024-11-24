@@ -1,5 +1,4 @@
 source/data/cifar-10-batches-py
-source/extract_plots.py
 .idea
 NN_Initial_Report_10453.pdf
 output_cnn.txt
