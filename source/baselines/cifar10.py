@@ -85,6 +85,9 @@ class Cifar10(Dataset):
             self.max = np.max(self.images)
             self.images = (self.images - self.min) / (self.max - self.min)
 
+    def get_train_test_split(self):
+        return self.images, self.labels, self.images_test, self.labels_test
+    
     def statistical_analysis(self):
         """
         Analyze the dataset and extract distribution and example plots
