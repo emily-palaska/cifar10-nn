@@ -9,12 +9,15 @@ class SVMClassifier:
         self.b = None
 
     def fit(self, x, y):
+        if x.ndim != 2:
+            x = x.reshape(x.shape[0], -1)
         n_samples, n_features = x.shape
         self.w = np.zeros(n_features)
         self.b = 0
         y_ = np.where(y <= 0, -1, 1)
 
-        for _ in range(self.n_iters):
+        for i in range(self.n_iters):
+            print(f"\rProgress: {100 * i / self.n_iters : .2f}%", end='')
             for idx, x_i in enumerate(x):
                 condition = y_[idx] * (np.dot(x_i, self.w) - self.b) >= 1
                 if condition:
@@ -30,5 +33,5 @@ class SVMClassifier:
     def evaluate(self, x_test, y_test):
         y_pred = self.predict(x_test)
         accuracy = np.mean(y_pred == y_test)
-        print(f"Accuracy: {accuracy * 100:.2f}%")
+        print(f"\rAccuracy: {accuracy * 100:.2f}%")
         return accuracy
