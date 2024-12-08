@@ -1,5 +1,5 @@
 import torch
-from ready_models.resnet18 import Trainer, ResNet18
+from nn.ready_models.resnet18 import Trainer, ResNet18
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 from baselines.cifar10 import Cifar10

@@ -1,7 +1,5 @@
-from torch.nn.functional import dropout
-
-from scratch.FullyConnectedLayer import FullyConnectedLayer
-from scratch.utils import *
+from nn.scratch.fully_connected_layer import FullyConnectedLayer
+from nn.scratch.utils import *
 from baselines.cifar10 import Cifar10
 import time,json
 

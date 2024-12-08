@@ -1,8 +1,8 @@
 import math, json, time
 
-from scratch.ConvLayer import ConvLayer
-from scratch.FullyConnectedLayer import FullyConnectedLayer
-from scratch.utils import *
+from nn.scratch.ConvLayer import ConvLayer
+from nn.scratch.FullyConnectedLayer import FullyConnectedLayer
+from nn.scratch.utils import *
 from baselines.cifar10 import Cifar10
 
 class ConvNetwork:

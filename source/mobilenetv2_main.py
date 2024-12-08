@@ -1,7 +1,7 @@
 import torch
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
-from ready_models.mobilenetv2 import MobileNetV2, Trainer
+from nn.ready_models.mobilenetv2 import MobileNetV2, Trainer
 from baselines.cifar10 import Cifar10
 import torch.nn as nn
 import torch.optim as optim

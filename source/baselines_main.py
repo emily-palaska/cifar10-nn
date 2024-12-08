@@ -1,9 +1,9 @@
 import numpy as np
 
-from cifar10 import Cifar10, unpickle
-from knn import KNNClassifier
-from nearest_centroid import NearestCentroidClassifier
-from evaluate import evaluate
+from baselines.cifar10 import Cifar10, unpickle
+from baselines.knn import KNNClassifier
+from baselines.nearest_centroid import NearestCentroidClassifier
+from baselines.evaluate import evaluate
 
 # Step 1: Load the CIFAR-10 dataset
 dataset = Cifar10(normalization='min-max')

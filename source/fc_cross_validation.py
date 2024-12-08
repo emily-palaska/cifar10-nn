@@ -1,6 +1,6 @@
 from sklearn.model_selection import KFold
-from scratch.FullyConnectedLayer import FullyConnectedLayer
-from scratch.utils import *
+from nn.scratch.FullyConnectedLayer import FullyConnectedLayer
+from nn.scratch.utils import *
 from baselines.cifar10 import Cifar10
 import time, json
 
