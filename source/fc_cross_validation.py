@@ -1,5 +1,5 @@
 from sklearn.model_selection import KFold
-from nn.scratch.FullyConnectedLayer import FullyConnectedLayer
+from nn.scratch.fully_connected_layer import FullyConnectedLayer
 from nn.scratch.utils import *
 from baselines.cifar10 import Cifar10
 import time, json
