@@ -6,6 +6,8 @@ def main():
     dataset = Cifar10(normalization='min-max')
     x_train, y_train, x_test, y_test = dataset.get_train_test_split()
 
+    # add one vs all logic or one vs one logic
+
     svm_classifier = SVMClassifier(learning_rate=0.001, lambda_param=0.01, n_iters=1000)
     svm_classifier.fit(x_train, y_train)
     svm_classifier.evaluate(x_test, y_test)
