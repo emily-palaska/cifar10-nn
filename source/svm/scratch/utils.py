@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
+import json
 
 def one_vs_all(labels, target):
     return np.where(labels == target, 1, -1)
@@ -24,3 +25,19 @@ def metrics(predictions, true_labels):
         "f1_score": fscore,
         "confusion_matrix": conf_matrix.tolist()
     }
+
+def append_to_json(file_path, new_data):
+    try:
+        # Open the existing JSON file and load its contents
+        with open(file_path, "r") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        # If the file doesn't exist, start with an empty dictionary
+        data = {}
+
+    # Update the dictionary with the new data
+    data.update(new_data)
+
+    # Save the updated dictionary back to the file
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=4)

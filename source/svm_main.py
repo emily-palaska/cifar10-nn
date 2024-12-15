@@ -11,7 +11,7 @@ def main():
     y_train, y_test = mysvm.one_vs_all(y_train, target), mysvm.one_vs_all(y_test, target)
 
     # Initialize classifier
-    svm_classifier = mysvm.SVMClassifier(learning_rate=0.0001, lambda_param=0.01, n_iters=100)
+    svm_classifier = mysvm.SVMClassifier(learning_rate=0.0001, lambda_param=0.01, n_iters=100, results_file="../results/svm/linear_1va")
     svm_classifier.fit(x_train, y_train)
     svm_classifier.evaluate(x_test, y_test)
 

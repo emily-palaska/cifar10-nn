@@ -1,12 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from .utils import metrics
+from .utils import metrics, append_to_json
+import time, json
 
 class SVMClassifier:
-    def __init__(self, learning_rate=0.001, lambda_param=0.01, n_iters=1000):
+    def __init__(self, learning_rate=0.001, lambda_param=0.01, n_iters=1000, results_file="svm"):
         self.lr = learning_rate
         self.lambda_param = lambda_param
         self.n_iters = n_iters
+        self.results_file = results_file
         self.w = None
         self.b = None
 
@@ -18,9 +20,10 @@ class SVMClassifier:
         self.b = 0
         y_ = np.where(y <= 0, -1, 1)
         loss = []
+        duration = []
 
-        # add time calculation and saving results
         for i in range(self.n_iters):
+            start_time = time.time()
             print(f"\rProgress: {100 * i / self.n_iters : .2f}%", end='')
             # Compute loss at the start of each iteration
             hinge_loss = np.maximum(0, 1 - y_ * (np.dot(x, self.w) - self.b))
@@ -33,7 +36,12 @@ class SVMClassifier:
                 else:
                     self.w -= self.lr * (2 * self.lambda_param * self.w - np.dot(x_i, y_[idx]))
                     self.b -= self.lr * y_[idx]
-        print("\r               ")  # Print a newline at the end
+            end_time = time.time()
+            duration.append(end_time - start_time)
+
+        # Save results to JSON file
+        append_to_json(f"{self.results_file}.json", {"train": {"loss": loss, "time": duration}})
+        print("\rProgress saved in training_results.json")
 
     def predict(self, x):
         if x.ndim != 2:
@@ -43,5 +51,4 @@ class SVMClassifier:
 
     def evaluate(self, x_test, y_test):
         y_pred = self.predict(x_test)
-        results = metrics(y_pred, y_test)
-        return results
+        append_to_json(f"{self.results_file}.json", {"test": metrics(y_pred, y_test)})
