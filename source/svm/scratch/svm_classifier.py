@@ -1,14 +1,12 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from .utils import metrics, append_to_json
 import time, json
 
 class SVMClassifier:
-    def __init__(self, learning_rate=0.001, lambda_param=0.01, n_iters=1000, results_file="svm"):
+    def __init__(self, learning_rate=0.001, lambda_param=0.01, n_iters=1000):
         self.lr = learning_rate
         self.lambda_param = lambda_param
         self.n_iters = n_iters
-        self.results_file = results_file
         self.w = None
         self.b = None
 
@@ -38,10 +36,7 @@ class SVMClassifier:
                     self.b -= self.lr * y_[idx]
             end_time = time.time()
             duration.append(end_time - start_time)
-
-        # Save results to JSON file
-        append_to_json(f"{self.results_file}.json", {"train": {"loss": loss, "time": duration}})
-        print("\rProgress saved in training_results.json")
+        return {'loss': loss, 'duration': duration}
 
     def predict(self, x):
         if x.ndim != 2:
@@ -51,4 +46,3 @@ class SVMClassifier:
 
     def evaluate(self, x_test, y_test):
         y_pred = self.predict(x_test)
-        append_to_json(f"{self.results_file}.json", {"test": metrics(y_pred, y_test)})

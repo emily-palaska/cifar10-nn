@@ -88,6 +88,9 @@ class Cifar10(Dataset):
     def get_train_test_split(self):
         return self.images, self.labels, self.images_test, self.labels_test
 
+    def get_number_of_classes(self):
+        return len(self.label_names)
+
     def statistical_analysis(self):
         """
         Analyze the dataset and extract distribution and example plots

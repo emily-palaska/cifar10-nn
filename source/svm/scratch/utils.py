@@ -1,9 +1,6 @@
-import numpy as np
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
 import json
 
-def one_vs_all(labels, target):
-    return np.where(labels == target, 1, -1)
 
 def metrics(predictions, true_labels):
     acc = accuracy_score(true_labels, predictions)
