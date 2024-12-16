@@ -16,6 +16,7 @@ class OneVsAllClassifier:
         """
         Train one SVM classifier per class using the one-vs-all strategy.
         """
+        results = {}
         for class_idx in range(n_classes):
             print(f"\rTraining classifier for class {class_idx} vs all...")
             y_binary = np.where(y_train == class_idx, 1, 0)  # Convert labels to 1 vs all
@@ -24,9 +25,10 @@ class OneVsAllClassifier:
                 lambda_param=self.lambda_param,
                 n_iters=self.n_iters
             )
-            results = svm.fit(x_train, y_binary)
+            results[f'{class_idx}'] = svm.fit(x_train, y_binary)
             self.models[class_idx] = svm
-            append_to_json(self.results_file, {f"{class_idx}": results})
+
+        append_to_json(self.results_file, {'fit': results})
         print("\r                       ")
 
     def predict(self, x):
@@ -43,11 +45,18 @@ class OneVsAllClassifier:
         predictions = np.stack(predictions, axis=1)
         return np.argmax(predictions, axis=1)
 
-    def evaluate(self, x_test, y_test):
+    def evaluate(self, x_test, y_test, n_classes):
         """
         Evaluate the performance of the one-vs-all classifier.
         """
+        # Evaluation of each model separately
+        evaluation_metrics = {}
+        for class_idx in range(n_classes):
+            y_binary = np.where(y_test == class_idx, 1, 0)  # Convert labels to 1 vs all
+            evaluation_metrics[f'{class_idx}'] = self.models[class_idx].evaluate(x_test, y_binary)
+
+        # Overall evaluation
         y_pred = self.predict(x_test)
-        evaluation_metrics = metrics(y_pred, y_test)
+        evaluation_metrics['general'] = metrics(y_pred, y_test)
         append_to_json(self.results_file, {"test": evaluation_metrics})
         return evaluation_metrics
