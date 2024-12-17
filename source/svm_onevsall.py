@@ -9,8 +9,8 @@ def main():
 
     # One vs all strategy
     learning_rate = 0.001
-    lambda_param = 0.01
-    n_iters = 100
+    lambda_param = 0.001
+    n_iters = 10
     file_name = f'../results/svm/1vA_lr{learning_rate}_l{lambda_param}_n{n_iters}.json'
     classifier = mysvm.OneVsAllClassifier(learning_rate=learning_rate, lambda_param=lambda_param, n_iters=n_iters, results_file=file_name)
     classifier.fit(x_train, y_train, n_classes)

@@ -38,7 +38,6 @@ class OneVsAllClassifier:
 
         for class_idx, model in self.models.items():
             linear_output = np.dot(x, model.w) - model.b
-            print(np.min(linear_output), np.max(linear_output))
             predictions.append(linear_output)
         predictions = np.stack(predictions, axis=1)
         return np.argmax(predictions, axis=1)

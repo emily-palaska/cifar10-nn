@@ -1,6 +1,6 @@
 import numpy as np
-from .utils import metrics, append_to_json
-import time, json
+from .utils import metrics
+import time
 
 class SVMClassifier:
     def __init__(self, learning_rate=0.001, lambda_param=0.01, n_iters=1000):
