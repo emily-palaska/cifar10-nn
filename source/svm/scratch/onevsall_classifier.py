@@ -1,6 +1,4 @@
 import numpy as np
-from decorator import append
-
 from .utils import metrics, append_to_json
 from .svm_classifier import SVMClassifier
 
@@ -19,7 +17,7 @@ class OneVsAllClassifier:
         results = {}
         for class_idx in range(n_classes):
             print(f"\rTraining classifier for class {class_idx} vs all...")
-            y_binary = np.where(y_train == class_idx, 1, 0)  # Convert labels to 1 vs all
+            y_binary = np.where(y_train == class_idx, 1, -1)  # Convert labels to 1 vs all
             svm = SVMClassifier(
                 learning_rate=self.lr,
                 lambda_param=self.lambda_param,
@@ -27,9 +25,8 @@ class OneVsAllClassifier:
             )
             results[f'{class_idx}'] = svm.fit(x_train, y_binary)
             self.models[class_idx] = svm
-
+        print('\r\n')
         append_to_json(self.results_file, {'fit': results})
-        print("\r                       ")
 
     def predict(self, x):
         """
@@ -41,6 +38,7 @@ class OneVsAllClassifier:
 
         for class_idx, model in self.models.items():
             linear_output = np.dot(x, model.w) - model.b
+            print(np.min(linear_output), np.max(linear_output))
             predictions.append(linear_output)
         predictions = np.stack(predictions, axis=1)
         return np.argmax(predictions, axis=1)
@@ -49,14 +47,15 @@ class OneVsAllClassifier:
         """
         Evaluate the performance of the one-vs-all classifier.
         """
+        y_pred = self.predict(x_test)
+
         # Evaluation of each model separately
         evaluation_metrics = {}
         for class_idx in range(n_classes):
-            y_binary = np.where(y_test == class_idx, 1, 0)  # Convert labels to 1 vs all
+            y_binary = np.where(y_test == class_idx, 1, -1)  # Convert labels to 1 vs all
             evaluation_metrics[f'{class_idx}'] = self.models[class_idx].evaluate(x_test, y_binary)
 
         # Overall evaluation
-        y_pred = self.predict(x_test)
         evaluation_metrics['general'] = metrics(y_pred, y_test)
         append_to_json(self.results_file, {"test": evaluation_metrics})
         return evaluation_metrics

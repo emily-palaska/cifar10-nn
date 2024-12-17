@@ -46,5 +46,5 @@ class SVMClassifier:
 
     def evaluate(self, x_test, y_test):
         y_pred = self.predict(x_test)
-        evaluation_metrics = metrics(y_test, y_pred)
+        evaluation_metrics = metrics(y_test, y_pred, verbose=False)
         return {"metrics": evaluation_metrics}
