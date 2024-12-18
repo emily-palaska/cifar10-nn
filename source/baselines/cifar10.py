@@ -30,7 +30,7 @@ class Cifar10(Dataset):
             self.labels.append(batch[b'labels'])
 
         # Load the test batch and normalize it with min-max
-        test_batch = unpickle('./data/cifar-10-batches-py/test_batch')
+        test_batch = unpickle(f'{self.data_folder}/test_batch')
         self.images_test = np.array(test_batch[b'data'])
 
         self.labels_test = np.array(test_batch[b'labels'])

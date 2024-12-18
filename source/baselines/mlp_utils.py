@@ -1,5 +1,27 @@
+import numpy as np
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
-import json
+
+# Define activation functions
+def relu(x):
+    return np.maximum(0, x)
+
+def relu_derivative(x):
+    return (x > 0).astype(float)
+
+# Define hinge loss
+def hinge_loss(y_true, y_pred):
+    # Hinge loss: max(0, 1 - y_true * y_pred)
+    return np.maximum(0, 1 - y_true * y_pred).mean()
+
+def hinge_loss_gradient(y_true, y_pred):
+    # Gradient of hinge loss
+    grad = np.zeros_like(y_pred)
+    grad[y_true * y_pred < 1] = -y_true[y_true * y_pred < 1]
+    return grad / len(y_true)
+
+# One-vs-One strategy setup
+def one_vs_one_pairs(num_classes):
+    return [(i, j) for i in range(num_classes) for j in range(i + 1, num_classes)]
 
 def metrics(predictions, true_labels, verbose=True):
     acc = accuracy_score(true_labels, predictions)
@@ -22,19 +44,3 @@ def metrics(predictions, true_labels, verbose=True):
         "f1_score": fscore,
         "confusion_matrix": conf_matrix.tolist()
     }
-
-def append_to_json(file_path, new_data):
-    try:
-        # Open the existing JSON file and load its contents
-        with open(file_path, "r") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        # If the file doesn't exist, start with an empty dictionary
-        data = {}
-
-    # Update the dictionary with the new data
-    data.update(new_data)
-
-    # Save the updated dictionary back to the file
-    with open(file_path, "w") as f:
-        json.dump(data, f, indent=4)
