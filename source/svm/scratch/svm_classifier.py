@@ -34,7 +34,22 @@ class SVMClassifier:
         elif kernel == "polynomial":
             return lambda x, y: (self.gamma * np.dot(x, y.T) + self.coef0) ** self.degree
         elif kernel == "rbf":
-            return lambda x, y: np.exp(-self.gamma * np.linalg.norm(x[:, None] - y, axis=2) ** 2)
+            if self.gamma is None:
+                self.gamma = 1 / self.n_features  # Default gamma
+    
+            def rbf_kernel(x, y):
+                # Pairwise computation for each row in x
+                if x.ndim == 1:  # Single sample in x
+                    distances = np.sum(x**2) + np.sum(y**2, axis=1) - 2 * np.dot(y, x)
+                    return np.exp(-self.gamma * distances)
+                else:  # Multiple samples in x
+                    kernel_values = np.zeros((x.shape[0], y.shape[0]))
+                    for i in range(x.shape[0]):
+                        distances = np.sum(x[i]**2) + np.sum(y**2, axis=1) - 2 * np.dot(y, x[i])
+                        kernel_values[i] = np.exp(-self.gamma * distances)
+                    return kernel_values
+    
+            return rbf_kernel
         elif kernel == "sigmoid":
             return lambda x, y: np.tanh(self.gamma * np.dot(x, y.T) + self.coef0)
         else:
@@ -79,10 +94,22 @@ class SVMClassifier:
     def predict(self, x):
         if x.ndim != 2:
             x = x.reshape(x.shape[0], -1)
-        kernel_output = np.sum(self.alpha * self.y[:, None] * self.kernel(self.x, x), axis=0) - self.b
-        return np.sign(kernel_output)
+
+        # Compute the decision boundary using the kernel
+        decision_values = np.zeros(x.shape[0])
+        for i in range(x.shape[0]):
+            kernel_values = self.kernel(self.x, x[i:i + 1])  # Compute kernel values
+            decision_values[i] = np.sum(self.alpha * self.y * kernel_values) - self.b
+
+        # Return the sign of the decision boundary as predictions
+        return np.sign(decision_values)
 
     def evaluate(self, x_test, y_test):
+        if x_test.ndim != 2:
+            x_test = x_test.reshape(x_test.shape[0], -1)
+
+        # Get predictions
         y_pred = self.predict(x_test)
-        evaluation_metrics = metrics(y_test, y_pred, verbose=False)
-        return {"metrics": evaluation_metrics}
+
+        # Compute evaluation metrics using the utility function
+        return metrics(y_test, y_pred, verbose=False)
