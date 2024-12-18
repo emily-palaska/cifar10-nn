@@ -3,10 +3,16 @@ from .utils import metrics, append_to_json
 from .svm_classifier import SVMClassifier
 
 class OneVsOneClassifier:
-    def __init__(self, learning_rate=0.001, lambda_param=0.01, n_iters=1000, results_file="one_vs_one_results.json"):
+    def __init__(self, learning_rate=0.001, lambda_param=0.01, n_iters=1000, kernel="linear", degree=3, gamma=None,
+                 coef0=1, n_features=3072, results_file='../results/svm/1v1.json'):
         self.lr = learning_rate
         self.lambda_param = lambda_param
         self.n_iters = n_iters
+        self.kernel = kernel
+        self.degree = degree
+        self.gamma = gamma
+        self.coef0 = coef0
+        self.n_features = n_features
         self.results_file = results_file
         self.models = {}  # To store classifiers for each pair of classes
 
@@ -29,7 +35,12 @@ class OneVsOneClassifier:
                 svm = SVMClassifier(
                     learning_rate=self.lr,
                     lambda_param=self.lambda_param,
-                    n_iters=self.n_iters
+                    n_iters=self.n_iters,
+                    kernel=self.kernel,
+                    degree=self.degree,
+                    gamma=self.gamma,
+                    coef0=self.coef0,
+                    n_features=self.n_features
                 )
                 results[f'{class_a}_vs_{class_b}'] = svm.fit(x_pair, y_binary)
                 self.models[(class_a, class_b)] = svm
