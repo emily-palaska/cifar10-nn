@@ -1,6 +1,5 @@
 from baselines.cifar10 import Cifar10
 import svm.scratch as mysvm
-import numpy as np
 
 def main():
     # Load the CIFAR-10 dataset
