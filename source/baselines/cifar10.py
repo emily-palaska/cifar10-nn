@@ -4,6 +4,7 @@ import os
 import time
 from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
 
 # Loading function from https://www.cs.toronto.edu/~kriz/cifar.html
 def unpickle(file):
@@ -14,8 +15,8 @@ def unpickle(file):
     return data
 
 class Cifar10(Dataset):
-    def __init__(self, data_folder='../data/cifar-10-batches-py', normalization='z-score', verbose=True,
-                 plot_folder='../../plots/baselines'):
+    def __init__(self, data_folder='./data/cifar-10-batches-py', normalization='z-score', verbose=True,
+                 plot_folder='../plots/baselines'):
         """
         Initialize the CIFAR-10 dataset.
 
@@ -115,11 +116,12 @@ class Cifar10(Dataset):
     def statistical_analysis(self):
         """
         Perform statistical analysis on the dataset, including class distribution,
-        pixel value distribution, and visualization of random samples.
+        pixel value distribution, visualization of random samples, and a t-SNE plot.
         """
         self._plot_class_distribution()
         self._plot_pixel_distribution()
         self._plot_image_grid()
+        self._plot_tsne()
         print(f'Statistical analysis completed. Plots saved to {self.plot_folder}')
 
     def _plot_class_distribution(self):
@@ -160,6 +162,29 @@ class Cifar10(Dataset):
             plt.axis('off')
         plt.tight_layout()
         plt.savefig(os.path.join(self.plot_folder, 'image_grid.png'))
+        plt.close()
+
+    def _plot_tsne(self):
+        """Create and save a t-SNE plot of the dataset."""
+        # Randomly sample 1000 images and their labels for t-SNE visualization
+        num_samples = min(1000, len(self.images))
+        indices = np.random.choice(len(self.images), size=num_samples, replace=False)
+        sampled_images = self.images[indices].reshape(num_samples, -1)  # Flatten images
+        sampled_labels = self.labels[indices]
+
+        # Perform t-SNE dimensionality reduction
+        tsne = TSNE(n_components=2, random_state=42, perplexity=30, n_iter=1000)
+        tsne_results = tsne.fit_transform(sampled_images)
+
+        # Plot the t-SNE results
+        plt.figure(figsize=(10, 8))
+        scatter = plt.scatter(tsne_results[:, 0], tsne_results[:, 1], c=sampled_labels, cmap='tab10', s=10)
+        plt.colorbar(scatter, ticks=range(len(self.label_names)))
+        plt.title('t-SNE Visualization of CIFAR-10')
+        plt.xlabel('t-SNE Component 1')
+        plt.ylabel('t-SNE Component 2')
+        plt.tight_layout()
+        plt.savefig(os.path.join(self.plot_folder, 'tsne_plot.png'))
         plt.close()
 
     def __len__(self):
