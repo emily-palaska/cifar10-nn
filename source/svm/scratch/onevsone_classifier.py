@@ -42,7 +42,9 @@ class OneVsOneClassifier:
                     coef0=self.coef0,
                     n_features=self.n_features
                 )
+
                 results[f'{class_a}_vs_{class_b}'] = svm.fit(x_pair, y_binary)
+                #svm.visualize()
                 self.models[(class_a, class_b)] = svm
         print('\r\n')
         append_to_json(self.results_file, {'fit': results})
