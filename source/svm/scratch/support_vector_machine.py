@@ -35,15 +35,10 @@ class SVMClassifier:
             return lambda x, y: (self.gamma * np.dot(x, y.T) + self.coef0) ** self.degree
         elif kernel == "rbf":
             def rbf_kernel(x, y):
-                if x.ndim == 1:
-                    distances = np.sum(x**2) + np.sum(y**2, axis=1) - 2 * np.dot(y, x)
-                    return np.exp(-self.gamma * distances)
-                else:
-                    kernel_values = np.zeros((x.shape[0], y.shape[0]))
-                    for i in range(x.shape[0]):
-                        distances = np.sum(x[i]**2) + np.sum(y**2, axis=1) - 2 * np.dot(y, x[i])
-                        kernel_values[i] = np.exp(-self.gamma * distances)
-                    return kernel_values
+                x_norm = np.sum(x ** 2, axis=1)[:, np.newaxis]  # Shape: (n_samples_x, 1)
+                y_norm = np.sum(y ** 2, axis=1)[np.newaxis, :]  # Shape: (1, n_samples_y)
+                distances = x_norm + y_norm - 2 * np.dot(x, y.T)
+                return np.exp(-self.gamma * distances)
 
             return rbf_kernel
         elif kernel == "sigmoid":
@@ -82,7 +77,8 @@ class SVMClassifier:
             loss.append(np.mean(np.maximum(0, hinge_loss)) + self.lambda_param * np.dot(self.alpha, self.alpha))
             end_time = time.time()
             duration.append(end_time - start_time)
-
+        for l in loss:
+            print('\r',l)
         return {'loss': loss, 'duration': duration}
 
     def predict(self, x):
@@ -108,57 +104,54 @@ class SVMClassifier:
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
-        # Downsample to 1000 samples if necessary
-        if self.x.shape[0] > 1000:
+        # Downsample if necessary
+        if self.x.shape[0] > 10000:
             indices = np.random.choice(self.x.shape[0], 1000, replace=False)
             x_vis = self.x[indices]
             y_vis = self.y[indices]
+            alpha_vis = self.alpha[indices]
         else:
             x_vis = self.x
             y_vis = self.y
+            alpha_vis = self.alpha
 
         # Reduce dimensionality for visualization
         tsne = TSNE(n_components=2, random_state=42)
         reduced_x = tsne.fit_transform(x_vis)
 
-        # Plot decision boundary and points
+        # Create a mesh grid for the decision boundary in 2D t-SNE space
+        x_min, x_max = reduced_x[:, 0].min() - 1, reduced_x[:, 0].max() + 1
+        y_min, y_max = reduced_x[:, 1].min() - 1, reduced_x[:, 1].max() + 1
+        xx, yy = np.meshgrid(np.linspace(x_min, x_max, 500), np.linspace(y_min, y_max, 500))
+        grid_points = np.c_[xx.ravel(), yy.ravel()]
+
+        # Compute decision values for the grid in t-SNE space
+        decision_values = np.zeros(grid_points.shape[0])
+        for i in range(grid_points.shape[0]):
+            distances = np.sum((reduced_x - grid_points[i]) ** 2, axis=1)
+            kernel_values = np.exp(-self.gamma * distances)
+            decision_values[i] = np.sum(alpha_vis * y_vis * kernel_values) - self.b
+
+        decision_values = decision_values.reshape(xx.shape)
+        print(np.min(decision_values), np.max(decision_values))
+
+        # Plot decision boundary and margins
         plt.figure(figsize=(10, 8))
+        plt.contourf(xx, yy, decision_values, levels=50, cmap="coolwarm", alpha=0.3)
+        plt.contour(xx, yy, decision_values, levels=[-1, 0, 1], colors=['blue', 'black', 'red'],
+                    linestyles=['--', '-', '--'], linewidths=1)
+
+        # Scatter plot of the data points
         plt.scatter(reduced_x[:, 0], reduced_x[:, 1], c=y_vis, cmap='coolwarm', alpha=0.7, edgecolor='k')
-        #TODO line
-        """
-        # Calculate the decision boundary in the original feature space (before t-SNE projection)
-        # Use the support vectors to approximate the margin
-        support_vectors = self.x[self.alpha > 0]
-        support_vector_labels = self.y[self.alpha > 0]
-
-        # Compute the projections of the support vectors in the reduced space (t-SNE)
-        tsne_support_vectors = tsne.fit_transform(support_vectors)
-
-        # Calculate the weights of the decision boundary in the feature space
-        w = self.w
-        b = self.b
-
-        # We approximate the decision boundary using the transformed support vectors
-        # The decision boundary in 2D can be approximated using w and b
-        # We'll plot a line between the support vectors closest to the decision boundary
-
-        # Assuming the decision boundary is along the line connecting the support vectors
-        min_sv = tsne_support_vectors[np.argmin(np.linalg.norm(tsne_support_vectors, axis=1))]
-        max_sv = tsne_support_vectors[np.argmax(np.linalg.norm(tsne_support_vectors, axis=1))]
-
-        # Plot the line (approximately the maximum margin line)
-        plt.plot([min_sv[0], max_sv[0]], [min_sv[1], max_sv[1]], 'k--', label="Max Margin")
-        """
-        plt.title("SVM Decision Boundary Visualization")
+        plt.title(f"SVM Decision Boundary Visualization with {self.kernel_type} kernel")
         plt.xlabel("t-SNE Dimension 1")
         plt.ylabel("t-SNE Dimension 2")
 
         # Decide file name to avoid overwriting
         idx = 0
-        while os.path.exists(os.path.join(save_dir, f"svm_visualization{idx}.png")):
+        while os.path.exists(os.path.join(save_dir, f"svm_visualization_{self.kernel_type}{idx}.png")):
             idx += 1
 
         # Save plot
-        save_path = os.path.join(save_dir, f"svm_visualization{idx}.png")
+        save_path = os.path.join(save_dir, f"svm_visualization_{self.kernel_type}{idx}.png")
         plt.savefig(save_path)
-        plt.show()

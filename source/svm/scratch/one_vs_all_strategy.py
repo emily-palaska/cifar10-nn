@@ -1,6 +1,6 @@
 import numpy as np
 from .utils import metrics, append_to_json
-from .svm_classifier import SVMClassifier
+from .support_vector_machine import SVMClassifier
 
 class OneVsAllClassifier:
     def __init__(self, learning_rate=0.001, lambda_param=0.01, n_iters=1000, results_file="one_vs_all_results.json"):

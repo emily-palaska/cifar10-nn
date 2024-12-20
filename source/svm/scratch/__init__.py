@@ -1,4 +1,4 @@
-from .svm_classifier import *
+from .support_vector_machine import *
 from .utils import *
-from .onevsall_classifier import *
-from .onevsone_classifier import *
+from .one_vs_all_strategy import *
+from .one_vs_one_strategy import *

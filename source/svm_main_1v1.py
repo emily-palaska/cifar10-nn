@@ -29,10 +29,10 @@ def main():
     y_test = np.random.randint(0, 10, size=(num_test_images,))
     """
     # One vs all strategy
-    learning_rate = 0.0001
+    learning_rate = 0.001
     lambda_param = 0.01
-    n_iters = 10
-    kernel = 'sigmoid'
+    n_iters = 20
+    kernel = 'linear'
     degree = 3
     file_name = f'../results/svm/1v1_lr{learning_rate}_l{lambda_param}_n{n_iters}_{kernel}{degree}.json'
     classifier = mysvm.OneVsOneClassifier(learning_rate=learning_rate,
