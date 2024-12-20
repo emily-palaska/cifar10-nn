@@ -10,6 +10,7 @@ def main():
     n_classes = dataset.get_number_of_classes()
 
     """
+
     # Replace cifar10 with noise
     n_classes = 10
 
@@ -28,9 +29,10 @@ def main():
     y_train = np.random.randint(0, 10, size=(num_train_images,))
     y_test = np.random.randint(0, 10, size=(num_test_images,))
     """
+
     svm = mysvm.SVMSklearn()
     svm.fit(x_train, y_train)
-    print(svm.evaluate(x_test, y_test))
+    svm.evaluate(x_test, y_test)
 
 if __name__ == '__main__':
     main()
