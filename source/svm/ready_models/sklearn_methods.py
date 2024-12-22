@@ -11,7 +11,10 @@ class SVMSklearn:
         self.model = None
         self.pca = None
         self.kernel = kernel
-        self.model = SVC(random_state=42, verbose=True, kernel=self.kernel)
+        if self.kernel == 'liblinear':
+            self.model = LinearSVC(random_state=42, verbose=True)
+        else:
+            self.model = SVC(kernel=self.kernel, random_state=42, verbose=True)
 
     def fit(self, x, y):
         """
