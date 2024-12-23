@@ -11,12 +11,12 @@ def unpickle(file):
     return data
 
 # Load the JSON data
-json_file = "../results/results_vgg16_lr0.0001_20ep.json"  # Replace with your JSON file path
+json_file = "../results/svm/sklearn_rbf.json"  # Replace with your JSON file path
 with open(json_file, "r") as file:
     data = json.load(file)
 
-# Extract the confusion matrix
-confusion_matrix = np.array(data["metrics"]["confusion_matrix"])
+# Extract the confusion matrix4
+confusion_matrix = np.array(data["confusion_matrix"])
 confusion_matrix = np.round(confusion_matrix / confusion_matrix.sum(axis=1, keepdims=True), 2)
 
 # Load labels decoder to strings
@@ -29,11 +29,11 @@ display = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix, display_labe
 display.plot(cmap="viridis", colorbar=True)
 
 # Save the plot
-plt.title("Confusion Matrix: VGG-16 - LR 0.0001 - 20 EPOCHS")
+plt.title("Confusion Matrix:444444 LibSvm with RBF Kernel")
 plt.xticks(rotation=45)
-output_file = "confusion_matrix.png"  # Replace with your desired output path
+output_file = "svm/confusion_matrix.png"
 plt.tight_layout()
-plt.savefig(output_file, dpi=300)
+plt.savefig(output_file)
 plt.show()
 
 print(f"Confusion matrix saved as {output_file}")
